@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Money Time Application</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Money Time with Ebonie Dion, Esq. Small business grant coaching, consultations and guides.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="scrollcraft.css">
+<style>
+  /* Layout: a working grant-application surface. App chrome (section sidebar +
+     status bar) is the navigation; one form sheet on a folder-grey desk; the
+     close is a real input. Deliberately single-theme, like the paper it imitates. */
+  :root {
+    --sc-canvas: #E4E9EF;    /* desk / folder grey */
+    --sc-surface: #FFFFFF;   /* the sheet */
+    --sc-ink: #13213C;       /* form navy */
+    --sc-ink-soft: #4A5670;
+    --sc-accent: #B23F0E;    /* her burnt orange: required marks, stamp, the one CTA */
+    --sc-accent-ink: #FFFFFF;
+    --field: #F3F5F8;
+    --rule: #C8D0DB;
+    --ok: #1F6B45;
+    --sc-font-display: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+    --sc-font-text: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+    --sc-font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --side: 17rem;
+    --bar: 3.25rem;
+    color-scheme: light;
+  }
+  html, body { background: var(--sc-canvas); color: var(--sc-ink); }
+  body { font-size: 1rem; }
+  a { color: inherit; }
+  .mono { font-family: var(--sc-font-mono); }
+
+  /* ---------------------------------------------------------- chrome -- */
+  .bar {
+    position: fixed; z-index: 60; top: 0; left: 0; right: 0; height: calc(var(--bar) + env(safe-area-inset-top, 0px));
+    padding: env(safe-area-inset-top, 0px) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+    display: flex; align-items: center; gap: 1.25rem; background: var(--sc-ink); color: #E8ECF3;
+    font-size: .82rem;
+  }
+  .bar .brand { display: flex; align-items: center; gap: .6rem; font-weight: 700; letter-spacing: .01em; white-space: nowrap; }
+  .bar .brand img { height: 1.15rem; width: auto; filter: brightness(1.25); }
+  .bar .doc { color: #A9B4C7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .bar .meter { margin-left: auto; display: flex; align-items: center; gap: .7rem; white-space: nowrap; }
+  .bar .track { width: 9rem; height: 6px; border-radius: 3px; background: #2A3A5A; overflow: hidden; }
+  .bar .fill { height: 100%; width: 100%; background: #F0B48F; transform-origin: 0 50%; transform: scaleX(0); transition: transform 300ms var(--sc-ease-out); }
+  .bar .pct { font-family: var(--sc-font-mono); font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: right; }
+  .bar .cta { background: var(--sc-accent); color: #fff; text-decoration: none; font-weight: 700; padding: .5rem .85rem; border-radius: 4px; white-space: nowrap; }
+  .bar .cta:active { transform: translateY(1px); }
+
+  .side {
+    position: fixed; z-index: 50; top: calc(var(--bar) + env(safe-area-inset-top, 0px)); bottom: 0; left: 0; width: var(--side);
+    padding: 1.6rem 1.2rem 1.6rem max(1.4rem, env(safe-area-inset-left, 0px)); border-right: 1px solid var(--rule); background: #EDF1F5;
+    display: flex; flex-direction: column; gap: 1.2rem; overflow-y: auto;
+  }
+  .side h2 { font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--sc-ink-soft); margin: 0; font-weight: 600; }
+  .side ol { list-style: none; margin: 0; padding: 0; display: grid; gap: .15rem; }
+  .side a { display: grid; grid-template-columns: 1.4rem 1fr; gap: .6rem; align-items: center; padding: .5rem .6rem; border-radius: 6px; text-decoration: none; font-size: .9rem; color: var(--sc-ink-soft); }
+  .side a:hover { background: #E2E8EF; }
+  .side a[aria-current="step"] { background: var(--sc-surface); color: var(--sc-ink); font-weight: 600; box-shadow: var(--sc-e1); }
+  .box { width: 1.15rem; height: 1.15rem; border: 1.5px solid #8893A6; border-radius: 3px; display: grid; place-items: center; background: #fff; transition: background 200ms var(--sc-ease-out), border-color 200ms var(--sc-ease-out); }
+  .box svg { width: .8rem; height: .8rem; opacity: 0; transform: scale(.7); transition: opacity 180ms var(--sc-ease-out), transform 220ms var(--sc-ease-out); }
+  .done .box, .box.done { background: var(--ok); border-color: var(--ok); }
+  .done .box svg, .box.done svg { opacity: 1; transform: none; }
+  .side .help { margin-top: auto; font-size: .82rem; color: var(--sc-ink-soft); border-top: 1px solid var(--rule); padding-top: 1rem; }
+  .side .help a { display: inline; padding: 0; color: var(--sc-ink); font-weight: 600; text-decoration: underline; text-underline-offset: .2em; }
+
+  /* ----------------------------------------------------------- sheet -- */
+  .desk { padding: calc(var(--bar) + env(safe-area-inset-top, 0px) + 2.5rem) max(16px, env(safe-area-inset-right, 0px), 3vw) 4rem calc(var(--side) + max(16px, 3vw)); }
+  .sheet { max-width: 56rem; margin: 0 auto; background: var(--sc-surface); box-shadow: var(--sc-e2), var(--sc-edge); border-radius: 4px; position: relative; }
+  .sheet-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1.5rem; padding: 2rem clamp(1.2rem, 4vw, 3rem) 1.4rem; border-bottom: 3px solid var(--sc-ink); }
+  .sheet-head img { width: 13rem; height: auto; }
+  .sheet-head .meta { text-align: right; font-family: var(--sc-font-mono); font-size: .74rem; color: var(--sc-ink-soft); line-height: 1.6; }
+  .sec { padding: 2.2rem clamp(1.2rem, 4vw, 3rem) 2.6rem; border-bottom: 1px solid var(--rule); scroll-margin-top: calc(var(--bar) + 1rem); }
+  .sec:last-child { border-bottom: 0; }
+  .sec-h { display: flex; align-items: baseline; gap: .9rem; margin: 0 0 1.6rem; }
+  .sec-h .l { font-family: var(--sc-font-mono); font-size: .8rem; color: #fff; background: var(--sc-ink); padding: .15rem .5rem; border-radius: 3px; }
+  .sec-h h2 { margin: 0; font-size: 1.3rem; font-weight: 700; letter-spacing: -0.01em; }
+  .sec-h .req { margin-left: auto; font-size: .78rem; color: var(--sc-ink-soft); }
+  .req i, .lab i { color: var(--sc-accent); font-style: normal; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem 1.4rem; }
+  .full { grid-column: 1 / -1; }
+  .fld { display: grid; gap: .35rem; min-width: 0; }
+  .lab { font-family: var(--sc-font-mono); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--sc-ink-soft); }
+  .val { background: var(--field); border: 1px solid var(--rule); border-bottom: 2px solid var(--sc-ink); border-radius: 3px 3px 0 0; padding: .7rem .85rem; font-size: 1.02rem; min-height: 2.9rem; }
+  .hint { font-size: .8rem; color: var(--sc-ink-soft); }
+
+  /* A: the applicant block is the hero */
+  #A { display: grid; grid-template-columns: minmax(0, 1fr) 15rem; gap: 2rem; align-items: start; }
+  #A .sec-h { grid-column: 1 / -1; }
+  .purpose .val { font-size: clamp(1.9rem, 3.6vw, 2.9rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.04; padding: 1rem 1rem 1.1rem; background: #FFF; text-wrap: balance; }
+  .purpose .val h1 { font: inherit; margin: 0; }
+  .typed::after { content: ""; display: inline-block; width: .08em; height: .9em; background: var(--sc-accent); margin-left: .06em; vertical-align: -.08em; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .btn { display: inline-flex; align-items: center; gap: .5rem; background: var(--sc-accent); color: #fff; font-weight: 700; text-decoration: none; padding: .85rem 1.2rem; border-radius: 4px; border: 0; cursor: pointer; font-size: 1rem; box-shadow: 0 2px 0 #7E2C08; transition: transform 120ms var(--sc-ease-out), box-shadow 120ms var(--sc-ease-out), background 160ms var(--sc-ease-out); }
+  .btn:hover { background: #9C360B; }
+  .btn:active { transform: translateY(2px); box-shadow: 0 0 0 #7E2C08; }
+  .btn.ghost { background: transparent; color: var(--sc-ink); box-shadow: inset 0 0 0 1.5px var(--sc-ink); }
+  .btn.ghost:hover { background: var(--field); }
+  .actions { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; margin-top: .4rem; }
+
+  /* the clipped photo: four planes */
+  .clip { position: relative; height: 22rem; }
+  .clip .photo { position: absolute; inset: 1rem 0 0 0; background: #fff; padding: .55rem .55rem 2.2rem; box-shadow: 0 3px 6px rgb(19 33 60 / .14), 0 18px 34px -12px rgb(19 33 60 / .32); rotate: 2.5deg; will-change: transform; }
+  .clip .photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; display: block; }
+  .clip .photo span { position: absolute; left: .7rem; bottom: .6rem; font-family: var(--sc-font-mono); font-size: .7rem; color: var(--sc-ink-soft); }
+  .clip .pin { position: absolute; z-index: 3; top: -.3rem; left: 44%; width: 2.2rem; height: auto; will-change: transform; filter: drop-shadow(1px 3px 2px rgb(19 33 60 / .35)); }
+  .stamp { position: absolute; z-index: 4; right: -1.6rem; bottom: -1.2rem; rotate: -11deg; border: 3px solid var(--sc-accent); color: var(--sc-accent); border-radius: 6px; padding: .35rem .7rem; font-weight: 800; letter-spacing: .14em; font-size: .9rem; background: rgb(255 255 255 / .55); mix-blend-mode: multiply; will-change: transform; }
+  .stamp small { display: block; font-family: var(--sc-font-mono); font-weight: 500; letter-spacing: .04em; font-size: .62rem; }
+
+  /* B */
+  .area { white-space: normal; line-height: 1.6; }
+  .area p { margin: 0 0 .8em; } .area p:last-child { margin: 0; }
+  .count { justify-self: end; font-family: var(--sc-font-mono); font-size: .74rem; color: var(--sc-ink-soft); font-variant-numeric: tabular-nums; }
+
+  /* C */
+  .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: .1rem; }
+  .checks li { display: grid; grid-template-columns: 1.15rem 1fr auto; gap: .85rem; align-items: center; padding: .8rem 0; border-bottom: 1px dashed var(--rule); }
+  .checks .src { font-family: var(--sc-font-mono); font-size: .72rem; color: var(--sc-ink-soft); }
+  .statement { margin-top: 1.4rem; }
+  .statement .val { font-style: italic; font-size: 1.12rem; line-height: 1.5; }
+
+  /* D */
+  .plan { list-style: none; margin: 0; padding: 0; counter-reset: st; display: grid; gap: .9rem; }
+  .plan li { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; gap: 1rem; align-items: start; border: 1px solid var(--rule); border-radius: 4px; padding: 1rem 1.1rem; }
+  .plan .no { width: 2.4rem; height: 2.4rem; border-radius: 50%; background: var(--sc-ink); color: #fff; display: grid; place-items: center; font-weight: 700; }
+  .plan h3 { margin: 0 0 .25rem; font-size: 1.05rem; }
+  .plan p { margin: 0; color: var(--sc-ink-soft); font-size: .95rem; }
+  .chip { font-family: var(--sc-font-mono); font-size: .7rem; padding: .2rem .45rem; border-radius: 3px; background: #E3F0E8; color: var(--ok); white-space: nowrap; }
+  .chip.paid { background: #FBEDE6; color: #8A3109; }
+  .plan a { font-weight: 600; font-size: .9rem; white-space: nowrap; }
+
+  /* E */
+  .budget { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .budget th { font-family: var(--sc-font-mono); font-weight: 500; font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; color: var(--sc-ink-soft); text-align: left; padding: .5rem .6rem; background: var(--field); border-bottom: 1px solid var(--rule); }
+  .budget td { padding: .75rem .6rem; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+  .budget td.num, .budget th.num { text-align: right; }
+  .budget tr.grp td { font-family: var(--sc-font-mono); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; color: var(--sc-ink-soft); padding-top: 1.1rem; border-bottom: 0; }
+  .budget label { display: flex; gap: .7rem; align-items: center; cursor: pointer; }
+  .budget input[type="checkbox"] { width: 1.1rem; height: 1.1rem; accent-color: var(--ok); margin: 0; flex: none; }
+  .budget tfoot td { border-bottom: 0; border-top: 3px solid var(--sc-ink); font-weight: 800; font-size: 1.15rem; padding-top: 1rem; }
+  .budget a { font-weight: 600; font-size: .85rem; }
+  .ex { font-size: .8rem; color: var(--sc-ink-soft); margin-top: .8rem; }
+
+  /* F */
+  .att { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+  .att li { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr); gap: .8rem; align-items: start; border: 1px solid var(--rule); border-radius: 4px; padding: .9rem; }
+  .att .doc-ic { width: 2.4rem; height: 3rem; border: 1.5px solid var(--sc-ink); border-radius: 2px; position: relative; background: #fff; }
+  .att .doc-ic::after { content: ""; position: absolute; left: .4rem; right: .4rem; top: .6rem; height: 1.4rem; background: repeating-linear-gradient(var(--rule) 0 2px, transparent 2px 6px); }
+  .att b { display: block; font-size: .95rem; }
+  .att span { font-size: .85rem; color: var(--sc-ink-soft); }
+  .att a { font-size: .85rem; font-weight: 600; }
+
+  /* G: the close is an input */
+  #G { background: #FAFBFC; border-radius: 0 0 4px 4px; }
+  .certify { display: grid; grid-template-columns: minmax(0, 1fr) 15rem; gap: 2rem; align-items: center; }
+  .certify form { display: grid; gap: 1rem; }
+  .certify input[type="text"], .certify input[type="email"] { width: 100%; background: #fff; border: 1px solid var(--rule); border-bottom: 2px solid var(--sc-ink); border-radius: 3px 3px 0 0; padding: .75rem .85rem; font-size: 1.05rem; }
+  .certify input:focus-visible { outline: 2px solid var(--sc-accent); outline-offset: 2px; }
+  .agree { display: flex; gap: .6rem; align-items: flex-start; font-size: .9rem; color: var(--sc-ink-soft); }
+  .agree input { width: 1.1rem; height: 1.1rem; accent-color: var(--ok); margin-top: .15rem; }
+  .seal { width: 100%; height: auto; transition: transform 500ms var(--sc-ease-out); }
+  .seal.set { transform: rotate(-8deg) scale(1.03); }
+  .seal text { font-family: var(--sc-font-mono); }
+  .result { display: none; border: 1px solid var(--ok); background: #EEF6F1; border-radius: 4px; padding: 1rem 1.1rem; }
+  .result.show { display: block; }
+  .result b { color: var(--ok); }
+  .demo { font-size: .78rem; color: var(--sc-ink-soft); }
+  .foot { max-width: 56rem; margin: 1.6rem auto 0; display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; font-size: .82rem; color: var(--sc-ink-soft); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .foot a { text-decoration: none; } .foot a:hover { text-decoration: underline; }
+
+  @media (max-width: 1000px) {
+    .side { display: none; }
+    .desk { padding-left: max(16px, env(safe-area-inset-left, 0px), 3vw); }
+    .bar .doc { display: none; }
+  }
+  @media (max-width: 700px) {
+    .bar { gap: .7rem; }
+    .bar .brand span { display: none; }
+    .bar .track { width: 4.5rem; }
+    .bar .meter .lbl { display: none; }
+    .bar .cta { padding: .45rem .65rem; font-size: .78rem; }
+    .desk { padding-top: calc(var(--bar) + env(safe-area-inset-top, 0px) + 1rem); padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); }
+    .sheet-head { flex-direction: column; align-items: flex-start; }
+    .sheet-head .meta { text-align: left; }
+    #A, .certify { grid-template-columns: 1fr; }
+    .clip { height: 16rem; width: 12.5rem; margin: .4rem auto 1.2rem; }
+    .grid, .att { grid-template-columns: 1fr; }
+    .plan li { grid-template-columns: 2.4rem minmax(0, 1fr); }
+    .plan li > :last-child { grid-column: 2; }
+    .sec-h .req { display: none; }
+    .budget .hide-s { display: none; }
+    .stamp { right: -.6rem; }
+    .certify .seal { max-width: 13rem; margin: 0 auto; order: -1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .typed::after { animation: none; }
+    .clip .photo, .clip .pin, .stamp { transform: none !important; }
+  }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="brand"><img src="assets/logo.webp" width="652" height="112" alt="Money Time"><span>with Ebonie Dion, Esq.</span></div>
+  <div class="doc mono">Small Business Grant Application · Sample</div>
+  <div class="meter" aria-live="polite"><span class="lbl">Application</span><div class="track" aria-hidden="true"><div class="fill" id="fill"></div></div><span class="pct" id="pct">0%</span></div>
+  <a class="cta" href="https://www.longevitybc.com/checklist">Get the checklist</a>
+</header>
+
+<nav class="side" aria-label="Application sections">
+  <h2>Sections</h2>
+  <ol id="nav">
+    <li><a href="#A"><span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3" fill="none" stroke="#fff" stroke-width="2"/></svg></span>A. Applicant</a></li>
+    <li><a href="#B"><span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3" fill="none" stroke="#fff" stroke-width="2"/></svg></span>B. Statement of need</a></li>
+    <li><a href="#C"><span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3" fill="none" stroke="#fff" stroke-width="2"/></svg></span>C. Qualifications</a></li>
+    <li><a href="#D"><span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3" fill="none" stroke="#fff" stroke-width="2"/></svg></span>D. Program plan</a></li>
+    <li><a href="#E"><span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3" fill="none" stroke="#fff" stroke-width="2"/></svg></span>E. Budget</a></li>
+    <li><a href="#F"><span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3" fill="none" stroke="#fff" stroke-width="2"/></svg></span>F. Attachments</a></li>
+    <li><a href="#G"><span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3" fill="none" stroke="#fff" stroke-width="2"/></svg></span>G. Certify and submit</a></li>
+  </ol>
+  <p class="help">Stuck on a real application? Grant writing is available by inquiry. <a href="https://www.longevitybc.com/businessinquiry">Send a business inquiry</a></p>
+</nav>
+
+<main class="desk">
+  <article class="sheet">
+    <header class="sheet-head">
+      <img src="assets/logo.webp" width="652" height="112" alt="Money Time">
+      <div class="meta">Form MT-1 · Small Business Grant Application<br>Prepared with Ebonie Dion, Esq.</div>
+    </header>
+
+    <section class="sec" id="A" data-sec>
+      <div class="sec-h"><span class="l">A</span><h2>Applicant</h2><span class="req"><i>*</i> required</span></div>
+      <div class="grid">
+        <div class="fld"><span class="lab">Coach <i>*</i></span><div class="val">Ebonie Dion, Esq.</div></div>
+        <div class="fld"><span class="lab">Organization <i>*</i></span><div class="val">Money Time · Longevity BC</div></div>
+        <div class="fld full purpose"><span class="lab">Purpose of this request <i>*</i></span><div class="val"><h1><span id="purpose">Helping you submit successful grant applications.</span></h1></div><span class="hint">If you're ready to pursue longevity, start with the free Business Start-Up Checklist.</span></div>
+        <div class="actions full"><a class="btn" href="https://www.longevitybc.com/checklist">Get the checklist</a><a class="btn ghost" href="#E">Book a session</a></div>
+      </div>
+      <div class="clip" aria-hidden="false">
+        <div class="photo" data-z="photo"><img src="assets/ebonie-portrait.webp" width="512" height="684" alt="Ebonie Dion, Esq., smiling, in a pale pink suit."><span>EBONIE DION, ESQ.</span></div>
+        <svg class="pin" data-z="pin" viewBox="0 0 30 70" aria-hidden="true"><path d="M9 62V14a6 6 0 0 1 12 0v40a3.5 3.5 0 0 1-7 0V18" fill="none" stroke="#8A94A6" stroke-width="3" stroke-linecap="round"/><path d="M9 62a6 6 0 0 0 12 0V8a7 7 0 0 0-14 0" fill="none" stroke="#C3CAD5" stroke-width="2.4" stroke-linecap="round"/></svg>
+        <div class="stamp" data-z="stamp">RECEIVED<small>MONEY TIME</small></div>
+      </div>
+    </section>
+
+    <section class="sec" id="B" data-sec>
+      <div class="sec-h"><span class="l">B</span><h2>Statement of need</h2></div>
+      <div class="fld"><span class="lab">Describe the problem this addresses <i>*</i></span>
+        <div class="val area" id="need"><p>Entrepreneurs shouldn't have to guess their way to funding. Small business grants are money you never pay back, but finding the legitimate ones and writing an application a reviewer says yes to is where most people stall.</p><p>Money Time helps entrepreneurs find, apply for, and win small business grants so they can secure the funding they need to grow, with integrity, transparency, and accessibility every step of the way.</p></div>
+        <span class="count" id="count">0 / 1,000 characters</span>
+      </div>
+    </section>
+
+    <section class="sec" id="C" data-sec>
+      <div class="sec-h"><span class="l">C</span><h2>Qualifications of the coach</h2></div>
+      <ul class="checks" id="checks">
+        <li><span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3" fill="none" stroke="#fff" stroke-width="2"/></svg></span><span>Licensed attorney in Missouri since 2010</span><span class="src">Bar</span></li>
+        <li><span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3" fill="none" stroke="#fff" stroke-width="2"/></svg></span><span>Real Estate Broker, licensed in Missouri and North Carolina</span><span class="src">License</span></li>
+        <li><span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3" fill="none" stroke="#fff" stroke-width="2"/></svg></span><span>Professor</span><span class="src">Faculty</span></li>
+        <li><span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3" fill="none" stroke="#fff" stroke-width="2"/></svg></span><span>Weekly grant walkthroughs on the Money Time YouTube channel</span><span class="src"><a href="https://www.youtube.com/@moneytimewitheboniedionesq">YouTube</a></span></li>
+        <li><span class="box"><svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3" fill="none" stroke="#fff" stroke-width="2"/></svg></span><span>Born and raised in Walnut Park, St. Louis</span><span class="src"><a href="https://www.longevitybc.com/my-story">My story</a></span></li>
+      </ul>
+      <div class="fld statement"><span class="lab">Personal statement</span><div class="val">"I don't believe in closed doors. If I want it, I will do what is necessary to get it, even if I must build a window or door to get through."</div><span class="hint">Drive trumps intellect. If you're an entrepreneur with drive and hungry to succeed, Ebonie will help you outwork your competition.</span></div>
+    </section>
+
+    <section class="sec" id="D" data-sec>
+      <div class="sec-h"><span class="l">D</span><h2>Program plan</h2><span class="req">Four steps, in order</span></div>
+      <ol class="plan">
+        <li><span class="no">1</span><div><h3>Download the Business Start-Up Checklist</h3><p>Everything an entrepreneur needs to do to start a business. <span class="chip">Free</span></p></div><a href="https://www.longevitybc.com/checklist">Get the checklist</a></li>
+        <li><span class="no">2</span><div><h3>Watch the walkthrough</h3><p>Multiple grant applications with the potential to make up to $500,000. <span class="chip">Free</span></p></div><a href="https://www.youtube.com/@moneytimewitheboniedionesq">Watch</a></li>
+        <li><span class="no">3</span><div><h3>Apply for more grants via Patreon</h3><p>The grants that don't fit in a YouTube video. <span class="chip paid">Membership</span></p></div><a href="https://www.patreon.com/moneytimewitheboniedionesq">Join</a></li>
+        <li><span class="no">4</span><div><h3>Book a one-on-one session</h3><p>Earn more revenue, embrace longevity, and create generational wealth. <span class="chip paid">From $250</span></p></div><a href="#E">See budget</a></li>
+      </ol>
+    </section>
+
+    <section class="sec" id="E" data-sec>
+      <div class="sec-h"><span class="l">E</span><h2>Budget worksheet</h2><span class="req">Select what you need</span></div>
+      <div style="overflow-x:auto">
+        <table class="budget" id="budget">
+          <thead><tr><th>Line item</th><th class="hide-s">Length</th><th class="num">Amount</th><th class="num">Book</th></tr></thead>
+          <tbody>
+            <tr class="grp"><td colspan="4">One-on-one sessions</td></tr>
+            <tr><td><label><input type="checkbox" id="b1" data-amt="250" checked>How to Start a Small Business</label></td><td class="hide-s">1 hr</td><td class="num">$250.00</td><td class="num"><a href="https://www.longevitybc.com/booking-calendar/how-to-start-a-small-business">Book</a></td></tr>
+            <tr><td><label><input type="checkbox" id="b2" data-amt="450">How to Scale a Small Business</label></td><td class="hide-s">2 hr</td><td class="num">$450.00</td><td class="num"><a href="https://www.longevitybc.com/booking-calendar/how-to-scale-a-small-business">Book</a></td></tr>
+            <tr><td><label><input type="checkbox" id="b3" data-amt="600">How to Launch a Small Business</label></td><td class="hide-s">3 hr</td><td class="num">$600.00</td><td class="num"><a href="https://www.longevitybc.com/booking-calendar/how-to-launch-a-small-business">Book</a></td></tr>
+            <tr><td><label><input type="checkbox" id="b4" data-amt="250">Develop an Entrepreneur Mindset</label></td><td class="hide-s">1 hr</td><td class="num">$250.00</td><td class="num"><a href="https://www.longevitybc.com/booking-calendar/develop-an-entrepreneur-mindset">Book</a></td></tr>
+            <tr><td><label><input type="checkbox" id="b5" data-amt="250">How to Start a Nonprofit</label></td><td class="hide-s">1 hr</td><td class="num">$250.00</td><td class="num"><a href="https://www.longevitybc.com/booking-calendar/how-to-start-a-nonprofit">Book</a></td></tr>
+            <tr class="grp"><td colspan="4">Guides</td></tr>
+            <tr><td><label><input type="checkbox" id="b6" data-amt="65" checked>Workbook + ebook bundle (was $95)</label></td><td class="hide-s">Self-paced</td><td class="num">$65.00</td><td class="num"><a href="https://www.longevitybc.com/shop">Shop</a></td></tr>
+            <tr><td><label><input type="checkbox" id="b7" data-amt="0" checked>Business Start-Up Checklist</label></td><td class="hide-s">Self-paced</td><td class="num">$0.00</td><td class="num"><a href="https://www.longevitybc.com/checklist">Get</a></td></tr>
+          </tbody>
+          <tfoot><tr><td>Total request</td><td class="hide-s"></td><td class="num" id="total">$315.00</td><td></td></tr></tfoot>
+        </table>
+      </div>
+      <p class="ex">Example selection shown. Prices from the Money Time consulting page and shop.</p>
+    </section>
+
+    <section class="sec" id="F" data-sec>
+      <div class="sec-h"><span class="l">F</span><h2>Attachments</h2></div>
+      <ul class="att">
+        <li><span class="doc-ic" aria-hidden="true"></span><div><b>Business Start-Up Checklist</b><span>Free download. </span><a href="https://www.longevitybc.com/checklist">Get the checklist</a></div></li>
+        <li><span class="doc-ic" aria-hidden="true"></span><div><b>Crack the Code: The Ultimate Guide to Mastering Small Business Grant Applications</b><span>Workbook, $65. </span><a href="https://www.longevitybc.com/shop">Shop</a></div></li>
+        <li><span class="doc-ic" aria-hidden="true"></span><div><b>The Ultimate Guide to Small Business Grants</b><span>eBook, $29.99. Because winning the lottery is just too unreliable. </span><a href="https://www.longevitybc.com/shop">Shop</a></div></li>
+        <li><span class="doc-ic" aria-hidden="true"></span><div><b>Money Time media kit</b><span>For press and partners. </span><a href="https://www.longevitybc.com/businessinquiry">Request it</a></div></li>
+      </ul>
+    </section>
+
+    <section class="sec" id="G" data-sec>
+      <div class="sec-h"><span class="l">G</span><h2>Certify and submit</h2></div>
+      <div class="certify">
+        <form id="form" novalidate>
+          <div class="fld"><label class="lab" for="biz">Your business name <i>*</i></label><input type="text" id="biz" name="biz" maxlength="28" autocomplete="organization" placeholder="e.g. Walnut Park Bakery"></div>
+          <div class="fld"><label class="lab" for="email">Email for the checklist <i>*</i></label><input type="email" id="email" name="email" autocomplete="email" placeholder="you@business.com"></div>
+          <label class="agree"><input type="checkbox" id="agree"> I'm ready to stop guessing my way to funding.</label>
+          <div class="actions"><button class="btn" type="submit">Get the checklist</button><span class="demo">Design preview: this form is not connected yet.</span></div>
+          <div class="result" id="result" role="status"><b>Ready.</b> <span id="resultText"></span> <a href="https://www.longevitybc.com/checklist">Open the checklist</a></div>
+        </form>
+        <svg class="seal" id="seal" viewBox="0 0 240 240" role="img" aria-label="Approval seal">
+          <defs><path id="ring" d="M120 120 m-86 0 a86 86 0 1 1 172 0 a86 86 0 1 1 -172 0"/></defs>
+          <circle cx="120" cy="120" r="112" fill="none" stroke="#B23F0E" stroke-width="3"/>
+          <circle cx="120" cy="120" r="70" fill="none" stroke="#B23F0E" stroke-width="1.5" stroke-dasharray="2 4"/>
+          <text font-size="12.5" letter-spacing="2.4" fill="#B23F0E"><textPath href="#ring" id="ringText">APPROVED FOR NEXT STEPS · YOUR BUSINESS · </textPath></text>
+          <text x="120" y="112" text-anchor="middle" font-size="13" fill="#13213C" font-weight="600">MONEY TIME</text>
+          <text x="120" y="134" text-anchor="middle" font-size="22" fill="#B23F0E" font-weight="700" id="sealMid">READY</text>
+          <text x="120" y="152" text-anchor="middle" font-size="9" fill="#4A5670">E. DION, ESQ.</text>
+        </svg>
+      </div>
+    </section>
+  </article>
+  <footer class="foot"><span>© Money Time with Ebonie Dion, Esq.</span><a href="https://www.youtube.com/@moneytimewitheboniedionesq">YouTube</a><a href="https://www.instagram.com/moneytimewitheboniedionesq">Instagram</a><a href="https://www.facebook.com/moneytimewitheboniedionesq">Facebook</a><a href="https://www.tiktok.com/@moneytimewitheboniedion">TikTok</a><a href="https://www.patreon.com/moneytimewitheboniedionesq">Patreon</a><a href="https://www.amazon.com/shop/moneytimewitheboniedionesq">Amazon favorites</a><a href="https://betterlegal.com/?aff=683a79eb5682">$100 off an LLC</a><span>Homepage concept B, "The Application"</span></footer>
+</main>
+
+<script src="scrollcraft.js"></script>
+<script>
+ScrollCraft.mount(document.body);
+(function () {
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var clamp = function (x, a, b) { return Math.max(a, Math.min(b, x)); };
+  var secs = Array.prototype.slice.call(document.querySelectorAll('[data-sec]'));
+  var navA = Array.prototype.slice.call(document.querySelectorAll('#nav a'));
+  var fill = document.getElementById('fill'), pct = document.getElementById('pct');
+  var checks = Array.prototype.slice.call(document.querySelectorAll('#checks .box'));
+  var Z = {}; document.querySelectorAll('[data-z]').forEach(function (el) { Z[el.getAttribute('data-z')] = el; });
+
+  // B: the character counter counts the real field.
+  var need = document.getElementById('need').textContent.replace(/\s+/g, ' ').trim().length;
+  document.getElementById('count').textContent = need.toLocaleString() + ' / 1,000 characters';
+
+  // A: the purpose line types itself once, on load.
+  var purpose = document.getElementById('purpose'), full = purpose.textContent;
+  if (!reduce) {
+    purpose.textContent = ''; purpose.classList.add('typed');
+    var i = 0; (function type() { purpose.textContent = full.slice(0, ++i); if (i < full.length) setTimeout(type, 28); else setTimeout(function () { purpose.classList.remove('typed'); }, 1200); })();
+  }
+
+  var done = 0;
+  function frame() {
+    var vh = innerHeight, line = vh * .55, cur = 0, passed = 0;
+    secs.forEach(function (s, i) {
+      var r = s.getBoundingClientRect();
+      if (r.top < line) cur = i;
+      // a section counts as complete once its bottom has crossed the reading line
+      var complete = r.bottom < line || (i === secs.length - 1 && r.top < vh * .5);
+      if (complete) passed++;
+      navA[i].classList.toggle('done', complete);
+    });
+    navA.forEach(function (a, i) { a.setAttribute('aria-current', i === cur ? 'step' : 'false'); });
+    var p = passed / secs.length;
+    fill.style.transform = 'scaleX(' + p + ')';
+    pct.textContent = Math.round(p * 100) + '%';
+
+    // C: qualifications tick one by one as the list crosses the viewport
+    var cl = document.getElementById('checks').getBoundingClientRect();
+    var cq = clamp((vh * .8 - cl.top) / (cl.height + vh * .2), 0, 1);
+    checks.forEach(function (b, k) { b.classList.toggle('done', cq > (k + .5) / checks.length * .9); });
+
+    // A: four planes of the clipped photo separate as the sheet scrolls
+    if (!reduce) {
+      var a = document.getElementById('A').getBoundingClientRect();
+      var q = clamp(-a.top / vh, -0.2, 1);
+      Z.photo.style.transform = 'translate3d(0,' + (q * 28) + 'px,0) rotate(' + (q * -1.5) + 'deg)';
+      Z.pin.style.transform = 'translate3d(0,' + (q * 10) + 'px,0)';
+      Z.stamp.style.transform = 'translate3d(' + (-q * 14) + 'px,' + (-q * 46) + 'px,0) rotate(' + (q * 4) + 'deg)';
+    }
+  }
+  var queued = false;
+  addEventListener('scroll', function () { if (!queued) { queued = true; requestAnimationFrame(function () { queued = false; frame(); }); } }, { passive: true });
+  addEventListener('resize', frame);
+  frame();
+
+  // E: the budget totals itself from the real prices.
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('#budget input[type="checkbox"]'));
+  function total() {
+    var t = boxes.reduce(function (s, b) { return s + (b.checked ? +b.getAttribute('data-amt') : 0); }, 0);
+    document.getElementById('total').textContent = '$' + t.toLocaleString('en-US', { minimumFractionDigits: 2 });
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', total); }); total();
+
+  // G, the signature: your business name is set into the seal as you type.
+  var biz = document.getElementById('biz'), ring = document.getElementById('ringText'), mid = document.getElementById('sealMid'), seal = document.getElementById('seal');
+  function setSeal() {
+    var n = biz.value.trim().toUpperCase() || 'YOUR BUSINESS';
+    ring.textContent = 'APPROVED FOR NEXT STEPS · ' + n + ' · ';
+    seal.classList.toggle('set', !!biz.value.trim());
+    mid.textContent = biz.value.trim() ? 'APPROVED' : 'READY';
+  }
+  biz.addEventListener('input', setSeal); setSeal();
+  document.getElementById('form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = document.getElementById('email');
+    var ok = biz.value.trim() && /.+@.+\..+/.test(email.value);
+    var r = document.getElementById('result'), t = document.getElementById('resultText');
+    r.classList.add('show');
+    if (!ok) { r.style.borderColor = '#B23F0E'; r.style.background = '#FBEDE6'; r.firstElementChild.textContent = 'Almost.'; t.textContent = 'Add your business name and a valid email, then submit again.'; return; }
+    r.style.borderColor = ''; r.style.background = ''; r.firstElementChild.textContent = 'Ready.';
+    t.textContent = biz.value.trim() + ' is approved for next steps. In the live site, the checklist would be emailed to ' + email.value + '.';
+  });
+})();
+</script>
+</body>
+</html>
