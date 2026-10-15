@@ -15,6 +15,5 @@ Three homepage redesign concepts for [Money Time with Ebonie Dion, Esq.](https:/
 
 ## Status
 
-- Portrait assets are interim crops from a screenshot. Swap in full-resolution cutouts by replacing `*/assets/ebonie-cutout.webp` and `*/assets/ebonie-portrait.webp`.
 - The checklist form in concept B is not connected to an email tool yet.
 - `BRIEF.md` has the design brief and source facts. `FINGERPRINTS.md` records how the three concepts differ.
